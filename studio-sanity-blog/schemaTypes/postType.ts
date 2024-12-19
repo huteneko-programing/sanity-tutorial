@@ -12,19 +12,48 @@ export const postType = defineType({
     }),
     defineField({
       name: 'slug',
-      type: 'slug', // スラグは URL の一部として使われる短い識別子です。
+      type: 'slug',
       options: {source: 'title'},
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'excerpt',
+      title: 'Excerpt',
+      type: 'text',
+      description: '記事の短い説明文や抜粋を入力してください',
+      validation: (rule) => rule.max(200),
+    }),
+    defineField({
+      name: 'author',
+      title: 'Author',
+      type: 'reference',
+      to: [{type: 'author'}],
+    }),
+    defineField({
+      name: 'categories',
+      title: 'Categories',
+      type: 'array',
+      of: [{type: 'reference', to: {type: 'category'}}],
+    }),
+    defineField({
       name: 'publishedAt',
       type: 'datetime',
-      initialValue: () => new Date().toISOString(), // 新規作成時のデフォルト値として、現在の日付と時間を自動入力します。
+      initialValue: () => new Date().toISOString(),
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'estimatedReadingTime',
+      title: 'Estimated Reading Time',
+      type: 'number',
+      description: '記事を読むのに必要な推定時間（分）',
+      validation: (rule) => rule.min(1).max(60),
+    }),
+    defineField({
       name: 'image',
-      type: 'image', // 画像ファイルをアップロードするフィールドです。
+      type: 'image',
+      options: {
+        hotspot: true, // 画像のトリミングポイントを設定可能にします
+      },
     }),
     defineField({
       name: 'body',
@@ -32,4 +61,19 @@ export const postType = defineType({
       of: [{type: 'block'}],
     }),
   ],
+  preview: {
+    select: {
+      title: 'title',
+      author: 'author.name',
+      media: 'image',
+    },
+    prepare(selection) {
+      const {title, author, media} = selection
+      return {
+        title,
+        subtitle: author && `by ${author}`,
+        media,
+      }
+    },
+  },
 })
