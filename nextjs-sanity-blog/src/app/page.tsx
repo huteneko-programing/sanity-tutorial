@@ -43,7 +43,7 @@ export default async function IndexPage() {
         {posts.map((post) => (
           <Card
             key={post._id}
-            className="flex flex-col hover:shadow-lg transition-shadow duration-300"
+            className="flex flex-col hover:shadow-lg transition-shadow duration-300 relative"
           >
             <Link href={`/${post.slug.current}`}>
               <CardHeader className="p-0">
@@ -88,7 +88,7 @@ export default async function IndexPage() {
                   </p>
                 )}
               </CardContent>
-              <CardFooter className="px-6 flex flex-col gap-4">
+              <CardFooter className="absolute bottom-[-15] right-[-10] px-6 flex flex-col gap-4">
                 <div className="flex items-center gap-4 text-sm text-muted-foreground w-full">
                   <div className="flex items-center gap-1">
                     <CalendarIcon size={16} />
