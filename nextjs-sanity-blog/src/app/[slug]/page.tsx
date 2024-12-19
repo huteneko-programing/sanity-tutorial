@@ -3,46 +3,137 @@ import imageUrlBuilder from "@sanity/image-url";
 import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { CalendarIcon, Clock, ArrowLeft } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { notFound } from "next/navigation";
 
-const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]`;
-
-const { projectId, dataset } = client.config();
-const urlFor = (source: SanityImageSource) =>
-  projectId && dataset
-    ? imageUrlBuilder({ projectId, dataset }).image(source)
-    : null;
+const POST_QUERY = `*[_type == "post" && slug.current == $slug][0]{
+  _id,
+  title,
+  slug,
+  publishedAt,
+  body,
+  image,
+  estimatedReadingTime,
+  categories[]->{ title },
+  author->{ name, image }
+}`;
 
 const options = { next: { revalidate: 30 } };
 
-export default async function PostPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const post = await client.fetch<SanityDocument>(POST_QUERY, params, options);
+const builder = imageUrlBuilder(client);
+
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function PostPage({ params }: PageProps) {
+  // params を await して slug を取得
+  const { slug } = await params;
+
+  if (!slug) {
+    notFound();
+  }
+
+  const post = await client.fetch<SanityDocument>(
+    POST_QUERY,
+    { slug },
+    options
+  );
+
+  if (!post) {
+    notFound();
+  }
+
   const postImageUrl = post.image
-    ? urlFor(post.image)?.width(550).height(310).url()
+    ? builder.image(post.image).width(1600).fit("clip").url()
     : null;
 
   return (
-    <main className="container mx-auto min-h-screen max-w-3xl p-8 flex flex-col gap-4">
-      <Link href="/" className="hover:underline">
-        ← Back to posts
-      </Link>
-      {postImageUrl && (
-        <img
-          src={postImageUrl}
-          alt={post.title}
-          className="aspect-video rounded-xl"
-          width="550"
-          height="310"
-        />
-      )}
-      <h1 className="text-4xl font-bold mb-8">{post.title}</h1>
-      <div className="prose">
-        <p>Published: {new Date(post.publishedAt).toLocaleDateString()}</p>
-        {Array.isArray(post.body) && <PortableText value={post.body} />}
+    <main className="container mx-auto min-h-screen max-w-4xl p-8">
+      <div className="mb-8">
+        <Link href="/">
+          <Button variant="ghost" className="gap-2">
+            <ArrowLeft size={16} /> Back to posts
+          </Button>
+        </Link>
       </div>
+
+      <Card className="overflow-hidden">
+        {postImageUrl && (
+          <div className="relative aspect-[16/9] w-full overflow-hidden">
+            <img
+              src={postImageUrl}
+              alt={post.title}
+              className="w-full h-full object-cover"
+              style={{
+                objectPosition: "center center",
+              }}
+            />
+          </div>
+        )}
+
+        <CardContent className="p-8">
+          <div className="flex gap-2 mb-6 flex-wrap">
+            {post.categories?.map((category: { title: string }) => (
+              <Badge
+                key={category.title}
+                variant="secondary"
+                className="bg-purple-100 text-purple-800"
+              >
+                {category.title}
+              </Badge>
+            ))}
+          </div>
+
+          <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            {post.title}
+          </h1>
+
+          <div className="flex items-center gap-6 text-muted-foreground mb-6">
+            <div className="flex items-center gap-2">
+              <CalendarIcon size={18} />
+              <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
+            </div>
+            {post.estimatedReadingTime && (
+              <div className="flex items-center gap-2">
+                <Clock size={18} />
+                <span>{post.estimatedReadingTime} min read</span>
+              </div>
+            )}
+          </div>
+
+          {post.author && (
+            <>
+              <div className="flex items-center gap-4 mb-8">
+                {post.author.image && (
+                  <img
+                    src={builder
+                      .image(post.author.image)
+                      .width(48)
+                      .height(48)
+                      .url()}
+                    alt={post.author.name}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                )}
+                <div>
+                  <p className="text-sm text-muted-foreground">Written by</p>
+                  <p className="font-medium">{post.author.name}</p>
+                </div>
+              </div>
+              <Separator className="mb-8" />
+            </>
+          )}
+
+          <div className="prose prose-lg max-w-none">
+            {Array.isArray(post.body) && <PortableText value={post.body} />}
+          </div>
+        </CardContent>
+      </Card>
     </main>
   );
 }
