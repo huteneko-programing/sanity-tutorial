@@ -47,8 +47,8 @@ export default async function IndexPage() {
           >
             <Link href={`/${post.slug.current}`}>
               <CardHeader className="p-0">
-                {post.image && (
-                  <div className="w-full h-48 overflow-hidden rounded-t-lg">
+                <div className="w-full h-48 overflow-hidden rounded-t-lg">
+                  {post.image ? (
                     <img
                       src={builder
                         .image(post.image)
@@ -58,8 +58,14 @@ export default async function IndexPage() {
                       alt={post.title}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <p className="text-gray-500 text-lg font-medium">
+                        No image
+                      </p>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="flex-1 p-6">
                 <div className="flex gap-2 mb-3 flex-wrap">

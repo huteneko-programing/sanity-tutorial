@@ -1,6 +1,5 @@
 import { PortableText, type SanityDocument } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
-import type { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { client } from "@/sanity/client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -63,8 +62,8 @@ export default async function PostPage({ params }: PageProps) {
       </div>
 
       <Card className="overflow-hidden">
-        {postImageUrl && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden">
+        <div className="relative aspect-[16/9] w-full overflow-hidden">
+          {postImageUrl ? (
             <img
               src={postImageUrl}
               alt={post.title}
@@ -73,8 +72,12 @@ export default async function PostPage({ params }: PageProps) {
                 objectPosition: "center center",
               }}
             />
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+              <p className="text-gray-500 text-lg font-medium">No image</p>
+            </div>
+          )}
+        </div>
 
         <CardContent className="p-8">
           <div className="flex gap-2 mb-6 flex-wrap">
